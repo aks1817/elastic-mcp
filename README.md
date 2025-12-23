@@ -216,4 +216,3 @@ curl -X POST "http://localhost:9200/vehicles/_search" -H "Content-Type: applicat
 - Integrate with UI (e.g., Streamlit) to run DSL automatically.
 
 For issues, check logs or refer to [MCP docs](https://modelcontextprotocol.io).</content>
-<parameter name="filePath">/Users/anuragshukla/Documents/elastic-mcp/README.md
