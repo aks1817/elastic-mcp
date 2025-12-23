@@ -1,0 +1,13 @@
+name: elasticsearch-tool
+description: Use Elasticsearch to run queries on the local indices
+tools:
+  - name: elasticsearch
+    type: http
+    base_url: http://localhost:5000
+    endpoints:
+      - name: list_indices
+        path: /list_indices
+        method: GET
+      - name: search
+        path: /search/{index}
+        method: POST

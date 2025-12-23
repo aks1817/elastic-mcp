@@ -1,0 +1,33 @@
+{
+  "tools": [
+    {
+      "name": "elasticsearch",
+      "type": "http",
+      "description": "Interact with local Elasticsearch via MCP server",
+      "base_url": "http://localhost:5000",
+      "endpoints": [
+        {
+          "name": "list_indices",
+          "path": "/list_indices",
+          "method": "GET"
+        },
+        {
+          "name": "get_mapping",
+          "path": "/get_mapping/{index}",
+          "method": "GET"
+        },
+        {
+          "name": "sample_docs",
+          "path": "/sample_docs/{index}?size=5",
+          "method": "GET"
+        },
+        {
+          "name": "search",
+          "path": "/search/{index}",
+          "method": "POST",
+          "request_body": {}
+        }
+      ]
+    }
+  ]
+}
