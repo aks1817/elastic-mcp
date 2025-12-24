@@ -1,0 +1,31 @@
+[
+  {
+    "index": "vehicles",
+    "query": {
+      "range": {
+        "price": {
+          "gte": 40000
+        }
+      }
+    }
+  },
+  {
+    "index": "registrations",
+    "query": {
+      "terms": {
+        "vehicle_id": []
+      }
+    },
+    "note": "After step 1, get vehicle_ids and use them here"
+  },
+  {
+    "index": "people",
+    "query": {
+      "terms": {
+        "id": []
+      }
+    },
+    "note": "After step 2, get person_ids and use them here"
+  }
+]
+

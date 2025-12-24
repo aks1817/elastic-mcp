@@ -108,82 +108,62 @@ curl -s http://localhost:9200/vehicles/_search?size=3 | jq
 
 ### Start the System
 
-Run mcphost with the MCP server and system prompt:
+**Option 1: Use the startup script (recommended)** - This pre-loads the model to avoid hanging:
 
 ```bash
-mcphost -m ollama:qwen2.5 --config ./elastic-mcp-config.json --system-prompt "Elasticsearch expert. For queries: 1. Call list_indices with index_pattern='*'. 2. Call get_mappings for each index. 3. Call sample_docs for each index. 4. Based on schema, output ONLY the query DSL JSON(s) for _search. No execution."
+./start_mcphost.sh
+```
+
+**Option 2: Manual start** - Run mcphost directly:
+
+```bash
+mcphost -m ollama:qwen2.5 --config ./elastic-mcp-config.json --system-prompt "Elasticsearch query generator. Steps: 1) list_indices with index_pattern='*'. 2) get_mappings for each index (call separately). 3) sample_docs for each index (call separately). 4) Analyze schema. 5) Output ONLY JSON query DSL. STRICT RULES: Output ONLY valid JSON. No explanations. No text. No markdown. No code blocks. No comments. Just pure JSON. Format: {\"index\": \"name\", \"query\": {...}} or {\"query\": {...}}. One query per line if multiple."
+```
+
+**Option 3: Use prompt file** - If you want to use the detailed prompt file:
+
+```bash
+mcphost -m ollama:qwen2.5 --config ./elastic-mcp-config.json --system-prompt "$(cat system_prompt.txt)"
+```
+
+**Note**: If mcphost gets stuck at "Loading Ollama Model...", pre-load the model first:
+```bash
+curl -s http://localhost:11434/api/generate -d '{"model": "qwen2.5", "prompt": "test", "stream": false}' > /dev/null
 ```
 
 This starts an interactive session.
 
 ### Example Queries
 
-Type these prompts and get DSL outputs:
+Type these prompts and get DSL outputs. **Note**: The system will output ONLY JSON, no explanations.
 
-1. **List indices**:
-
-   ```
-   Show me all indices
-   ```
-
-   Output: Indices list.
-
-2. **Simple query**:
+1. **Simple query**:
 
    ```
    Find all Tesla vehicles
    ```
 
-   Output:
+   Expected Output (ONLY JSON, no text):
 
    ```json
-   {
-     "query": {
-       "match": {
-         "make": "Tesla"
-       }
-     }
-   }
+   {"index": "vehicles", "query": {"match": {"make": "Tesla"}}}
    ```
 
-3. **Complex relational query**:
+2. **Complex relational query**:
 
    ```
    Find people who own cars worth 40k or more
    ```
 
-   Output (multiple DSLs):
+   Expected Output (ONLY JSON, one query per line):
 
    ```json
-   // 1. Find vehicles over $40k
-   {
-     "query": {
-       "range": {
-         "price": {
-           "gt": 40000
-         }
-       }
-     }
-   }
-
-   // 2. Find registrations for those vehicle_ids
-   {
-     "query": {
-       "terms": {
-         "vehicle_id": [1, 4]
-       }
-     }
-   }
-
-   // 3. Find people for those person_ids
-   {
-     "query": {
-       "terms": {
-         "id": [1, 2, 4]
-       }
-     }
-   }
+   {"index": "vehicles", "query": {"range": {"price": {"gte": 40000}}}}
+   {"index": "registrations", "query": {"terms": {"vehicle_id": [1, 4]}}}
+   {"index": "people", "query": {"terms": {"id": [1, 2, 4]}}}
    ```
+
+**Important**: The system is configured to output ONLY JSON. All explanations, comments, and extra text are suppressed. You will receive pure query DSL JSON only.
 
 ### Manual Execution
 
@@ -204,6 +184,30 @@ curl -X POST "http://localhost:9200/vehicles/_search" -H "Content-Type: applicat
 
 - **Elasticsearch not starting**: Check Docker and ports (9200).
 - **Ollama model not loading**: `ollama list` and `ollama pull qwen2.5`.
+- **mcphost stuck at "Loading Ollama Model..."**: 
+  - This is a common issue where mcphost hangs while trying to load the model.
+  - **Solution 1**: Pre-load the model before running mcphost:
+    ```bash
+    curl -s http://localhost:11434/api/generate -d '{"model": "qwen2.5", "prompt": "test", "stream": false}' > /dev/null
+    mcphost -m ollama:qwen2.5 --config ./elastic-mcp-config.json --system-prompt "..."
+    ```
+  - **Solution 2**: Use the provided startup script:
+    ```bash
+    ./start_mcphost.sh
+    ```
+  - **Solution 3**: Try using the full model name:
+    ```bash
+    mcphost -m ollama:qwen2.5:latest --config ./elastic-mcp-config.json --system-prompt "..."
+    ```
+  - **Solution 4**: Ensure Ollama is running and accessible:
+    ```bash
+    curl http://localhost:11434/api/tags
+    ```
+  - **Solution 5**: If still hanging, try a smaller model variant:
+    ```bash
+    ollama pull qwen2.5:3b
+    mcphost -m ollama:qwen2.5:3b --config ./elastic-mcp-config.json --system-prompt "..."
+    ```
 - **mcphost errors**: Ensure PATH and config file.
 - **Tool call errors**: The custom MCP server avoids Docker issues.
 - **No data**: Re-run `python3 seed_data.py`.

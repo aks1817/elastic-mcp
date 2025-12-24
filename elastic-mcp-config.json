@@ -2,7 +2,11 @@
   "mcpServers": {
     "elasticsearch": {
       "command": "python3",
-      "args": ["mcp_server.py"]
+      "args": ["-u", "/Users/iram/Documents/elastic-mcp/mcp_server.py"],
+      "cwd": "/Users/iram/Documents/elastic-mcp",
+      "env": {
+        "PYTHONUNBUFFERED": "1"
+      }
     }
   }
 }
